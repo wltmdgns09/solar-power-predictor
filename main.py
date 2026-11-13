@@ -33,7 +33,8 @@ def load_data():
     power["시간"] = pd.to_numeric(power["거래시간"], errors="coerce") - 1
     power["지역"] = power["지역"].astype(str).str.strip()
     power["발전량"] = pd.to_numeric(power["전력거래량(MWh)"], errors="coerce")
-# 지역 이름 표기 차이를 일부 통일
+
+    # 지역 이름 표기 차이를 일부 통일
     region_map = {
         "강원도": "강원", "경기도": "경기", "충청북도": "충북",
         "충청남도": "충남", "전라북도": "전북", "전라남도": "전남",
@@ -68,7 +69,7 @@ def load_data():
         raise ValueError(
             "기상 데이터와 발전량 데이터가 결합되지 않았습니다. "
             "지역 이름 또는 거래시간(1~24와 0~23)의 기준을 확인해야 합니다."
-               )
+        )
 
     df["월"] = df["날짜"].dt.month
     df["계절"] = df["월"].map({
@@ -114,7 +115,7 @@ if page == "데이터 소개":
     c4.metric("분석 변수 수", "6개")
 
     st.subheader("데이터 설명")
-   st.write("""
+    st.write("""
     - 기상 데이터: 시간과 지역에 따른 일사량, 구름 관련 값, 기온 정보
     - 발전량 데이터: 한국전력거래소의 지역별 시간별 태양광 전력거래량
     - 분석 방법: 날짜·시간·지역을 기준으로 두 데이터를 결합한 뒤 관계를 분석
@@ -146,7 +147,8 @@ elif page == "탐구 질문 분석":
         fig = px.bar(chart_data, x="시간대", y="발전량", title="시간대별 평균 태양광 발전량")
         st.plotly_chart(fig, use_container_width=True)
         st.write("시간대별 평균을 비교해 발전량이 높은 시간대를 확인합니다.")
- elif question.startswith("②"):
+
+    elif question.startswith("②"):
         tab1, tab2 = st.tabs(["월별", "계절별"])
         with tab1:
             monthly = df.groupby("월")["발전량"].mean().reset_index()
@@ -197,7 +199,7 @@ elif page == "탐구 질문 분석":
             .groupby("시간")["영발전"].mean().reset_index()
         )
         st.plotly_chart(
-       px.bar(by_hour, x="시간", y="영발전", title="시간별 발전량 0인 데이터 비율"),
+            px.bar(by_hour, x="시간", y="영발전", title="시간별 발전량 0인 데이터 비율"),
             use_container_width=True
         )
         st.write(
