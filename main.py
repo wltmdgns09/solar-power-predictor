@@ -12,8 +12,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-WEATHER_URL = "https://raw.githubusercontent.com/wltjsdn09/solar-power-predictor/refs/heads/main/%ED%83%9C%EC%96%91%EA%B4%91_%EB%B0%9C%EC%A0%84%EC%98%88%EC%B8%A1_%EA%B8%B0%EC%83%81_2025_%EC%A7%80%EC%97%AD%EB%B3%84%EC%8B%9C%EA%B0%84%ED%8F%89%EA%B7%A0.csv"
-POWER_URL = "https://raw.githubusercontent.com/wltjsdn09/solar-power-predictor/refs/heads/main/%ED%95%9C%EA%B5%AD%EC%A0%84%EB%A0%A5%EA%B1%B0%EB%9E%98%EC%86%8C_%EC%A7%80%EC%97%AD%EB%B3%84_%EC%8B%9C%EA%B0%84%EB%B3%84_%ED%83%9C%EC%96%91%EA%B4%91_%EB%B0%8F_%ED%92%8D%EB%A0%A5_%EB%B0%9C%EC%A0%84%EB%9F%89_UTF-8.csv"
+WEATHER_URL = "https://raw.githubusercontent.com/wltmdgns09/solar-power-predictor/refs/heads/main/%ED%83%9C%EC%96%91%EA%B4%91_%EB%B0%9C%EC%A0%84%EC%98%88%EC%B8%A1_%EA%B8%B0%EC%83%81_2025_%EC%A7%80%EC%97%AD%EB%B3%84%EC%8B%9C%EA%B0%84%ED%8F%89%EA%B7%A0.csv"
+POWER_URL = "https://raw.githubusercontent.com/wltmdgns09/solar-power-predictor/refs/heads/main/%ED%95%9C%EA%B5%AD%EC%A0%84%EB%A0%A5%EA%B1%B0%EB%9E%98%EC%86%8C_%EC%A7%80%EC%97%AD%EB%B3%84_%EC%8B%9C%EA%B0%84%EB%B3%84_%ED%83%9C%EC%96%91%EA%B4%91_%EB%B0%8F_%ED%92%8D%EB%A0%A5_%EB%B0%9C%EC%A0%84%EB%9F%89_UTF-8.csv"
 
 st.markdown("""
 <style>
@@ -32,8 +32,21 @@ div[data-testid="stTabs"] button {font-weight: 650;}
 
 @st.cache_data
 def load_data():
-    weather = pd.read_csv(WEATHER_URL)
-    power = pd.read_csv(POWER_URL)
+    try:
+        weather = pd.read_csv(WEATHER_URL, encoding="utf-8")
+    except Exception as e:
+        raise RuntimeError(
+            "기상 CSV를 불러오지 못했습니다. GitHub Raw 주소와 파일 공개 여부를 확인해 주세요. "
+            f"주소: {WEATHER_URL} / 원인: {e}"
+        ) from e
+
+    try:
+        power = pd.read_csv(POWER_URL, encoding="utf-8")
+    except Exception as e:
+        raise RuntimeError(
+            "발전량 CSV를 불러오지 못했습니다. GitHub Raw 주소와 파일 공개 여부를 확인해 주세요. "
+            f"주소: {POWER_URL} / 원인: {e}"
+        ) from e
     weather.columns = weather.columns.str.strip()
     power.columns = power.columns.str.strip()
 
@@ -44,12 +57,12 @@ def load_data():
     if not required_p.issubset(power.columns):
         raise ValueError(f"발전량 CSV 열 이름을 확인해 주세요. 필요한 열: {sorted(required_p)}")
 
-    weather["날짜"] = pd.to_datetime(weather["BASIC_DT"].astype(str), errors="coerce")
+    weather["날짜"] = pd.to_datetime(weather["BASIC_DT"].astype(str).str.strip(), errors="coerce")
     weather["시간"] = pd.to_numeric(weather["HH"], errors="coerce")
     weather["지역"] = weather["PLACE"].astype(str).str.strip()
 
     power = power[power["연료원"].astype(str).str.strip() == "태양광"].copy()
-    power["날짜"] = pd.to_datetime(power["거래일"].astype(str), errors="coerce")
+    power["날짜"] = pd.to_datetime(power["거래일"].astype(str).str.strip(), errors="coerce")
     # 원본 거래시간이 1~24이고 1이 00시를 뜻한다는 가정으로 1을 뺍니다.
     power["시간"] = pd.to_numeric(power["거래시간"], errors="coerce") - 1
     power["지역"] = power["지역"].astype(str).str.strip()
